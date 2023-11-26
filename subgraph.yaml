@@ -28,6 +28,8 @@ dataSources:
         - Transfer
         - Unnested
         - Unpaused
+        - Moonbird
+        - User
       abis:
         - name: Moonbirds
           file: ./abis/Moonbirds.json

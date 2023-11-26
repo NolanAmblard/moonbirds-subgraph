@@ -12,7 +12,8 @@ import {
   RoleRevoked as RoleRevokedEvent,
   Transfer as TransferEvent,
   Unnested as UnnestedEvent,
-  Unpaused as UnpausedEvent
+  Unpaused as UnpausedEvent,
+  Moonbirds as MoonbirdsContract
 } from "../generated/Moonbirds/Moonbirds"
 import {
   Approval,
@@ -28,7 +29,9 @@ import {
   RoleRevoked,
   Transfer,
   Unnested,
-  Unpaused
+  Unpaused,
+  Moonbird,
+  User
 } from "../generated/schema"
 
 export function handleApproval(event: ApprovalEvent): void {
@@ -191,6 +194,26 @@ export function handleRoleRevoked(event: RoleRevokedEvent): void {
 }
 
 export function handleTransfer(event: TransferEvent): void {
+  let moonbird = Moonbird.load(event.params.tokenId.toString());
+  if (!moonbird) {
+    moonbird = new Moonbird(event.params.tokenId.toString());
+    moonbird.minter = event.params.to.toHexString();
+    moonbird.createdAtTimestamp = event.block.timestamp;
+    moonbird.moonbirdID = event.params.tokenId;
+
+    let moonbirdContract = MoonbirdsContract.bind(event.address);
+    moonbird.contentURI = moonbirdContract.tokenURI(event.params.tokenId);
+  }
+
+  moonbird.owner = event.params.to.toHexString();
+  moonbird.save();
+
+  let user = User.load(event.params.to.toHexString());
+  if (!user) {
+    user = new User(event.params.to.toHexString());
+    user.save()
+  }
+  
   let entity = new Transfer(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
